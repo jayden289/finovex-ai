@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finovex AI">
+<meta name="theme-color" content="#000000">
+<title>Finovex AI</title>
+<link rel="apple-touch-icon" href="logo.png">
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#000;--panel:#0a0a0a;--card:#101010;--el1:#161616;--el2:#1e1e1e;--el3:#252525;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);--border3:rgba(255,255,255,0.18);
+  --accent:#A855F7;--accent-soft:#C084FC;--accent-dim:rgba(168,85,247,0.08);--accent-glow:rgba(168,85,247,0.2);
+  --text:#fff;--t2:rgba(255,255,255,0.48);--t3:rgba(255,255,255,0.22);--t4:rgba(255,255,255,0.1);
+  --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
+  --r:12px;--r-sm:8px;--r-lg:16px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','SF Pro Text',BlinkMacSystemFont,'Helvetica Neue',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+#app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto}
+
+/* PAGES */
+#pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;padding:0 0 calc(76px + var(--safe-b));display:none;scrollbar-width:none}
+.page::-webkit-scrollbar{display:none}
+.page.active{display:block}
+.page-inner{padding:0 16px}
+
+/* TOP BAR */
+.top-bar{padding:calc(12px + var(--safe-t)) 16px 8px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);z-index:10;border-bottom:1px solid var(--border)}
+.logo-row{display:flex;align-items:center;gap:9px}
+.logo-img{width:28px;height:28px;border-radius:7px;object-fit:cover}
+.logo-text{font-size:16px;font-weight:700;letter-spacing:-.3px;color:var(--text)}
+.logo-text span{color:var(--accent-soft)}
+
+/* NAV */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(4,4,4,0.96);border-top:1px solid var(--border);padding:8px 4px calc(8px + var(--safe-b));display:flex;z-index:100;backdrop-filter:blur(24px)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0;cursor:pointer;position:relative}
+.nav-icon-wrap{width:36px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:9px;transition:background .15s}
+.nav-item.active .nav-icon-wrap{background:rgba(168,85,247,0.1)}
+.nav-item svg{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.nav-item.active svg{stroke:var(--accent-soft)}
+.nav-label{font-size:9.5px;font-weight:600;color:var(--t3);letter-spacing:.2px;transition:color .15s}
+.nav-item.active .nav-label{color:var(--accent-soft)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:10px}
+.card-sm{padding:13px}
+.section-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;display:flex;align-items:center;justify-content:space-between}
+
+/* BUTTONS */
+.btn-ghost{background:var(--el1);border:1px solid var(--border2);border-radius:var(--r-sm);padding:5px 11px;font-size:11px;font-weight:600;color:var(--t2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.btn-ghost:active{transform:scale(.95);opacity:.8}
+.btn-accent{background:var(--accent);border:none;border-radius:var(--r-sm);padding:5px 13px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.2px}
+.btn-accent:active{transform:scale(.95)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;cursor:pointer;transition:border-color .15s;position:relative}
+.kpi-card:active{transform:scale(.98)}
+.kpi-card:hover{border-color:var(--border2)}
+.kpi-lbl{font-size:9.5px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+.kpi-val{font-size:26px;font-weight:800;letter-spacing:-1.2px;line-height:1;margin-bottom:7px}
+.kpi-badge{display:inline-block;background:var(--el2);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--t2);margin-bottom:3px}
+.kpi-target{font-size:10px;color:var(--t3)}
+.kpi-edit{position:absolute;top:10px;right:10px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;opacity:.25}
+.kpi-edit svg{width:12px;height:12px;stroke:var(--t2);fill:none;stroke-width:1.8}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:13px}
+.prog-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.prog-name{font-size:13px;font-weight:500}
+.prog-vals{font-size:11.5px;color:var(--t2);font-weight:600}
+.prog-track{height:3px;background:var(--el2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .5s cubic-bezier(.34,1.2,.64,1)}
+
+/* EXEC */
+.exec-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:10px}
+.exec-body{padding:16px}
+.exec-tag{display:inline-block;background:var(--el2);border-radius:6px;padding:3px 9px;font-size:9.5px;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px}
+.exec-text{font-size:13px;line-height:1.65;color:var(--text)}
+.exec-text b{color:var(--text);font-weight:700}
+.exec-footer{border-top:1px solid var(--border);padding:11px 16px;display:flex;gap:0}
+.exec-stat{flex:1;text-align:center}
+.exec-stat+.exec-stat{border-left:1px solid var(--border)}
+.exec-val{font-size:14px;font-weight:700}
+.exec-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-top:1px}
+
+/* LEAD ROW */
+.lead-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--el1);border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;cursor:pointer;transition:border-color .15s}
+.lead-row:active{transform:scale(.98)}
+.lead-row:hover{border-color:var(--border2)}
+.lead-av{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;background:var(--el3)}
+.lead-info{flex:1;min-width:0}
+.lead-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lead-note{font-size:11px;color:var(--t3);margin-top:1px}
+.lead-right{text-align:right;flex-shrink:0}
+.lead-aum{font-size:12.5px;font-weight:700}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-top:4px;border:1px solid}
+.s-new{background:transparent;border-color:var(--border2);color:var(--t3)}
+.s-contacted{background:var(--el2);border-color:var(--border2);color:var(--t2)}
+.s-booked{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.2);color:var(--accent-soft)}
+.s-showed{background:var(--el2);border-color:var(--border2);color:var(--t2)}
+.s-closed{background:rgba(255,255,255,.06);border-color:var(--border2);color:var(--text)}
+
+/* APPT */
+.appt-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--el1);border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;cursor:pointer}
+.appt-row:active{transform:scale(.98)}
+.appt-date{width:38px;text-align:center;flex-shrink:0}
+.appt-mo{font-size:9px;font-weight:700;color:var(--accent-soft);text-transform:uppercase;letter-spacing:.6px}
+.appt-day{font-size:20px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+.appt-info{flex:1}
+.appt-name{font-size:13px;font-weight:600}
+.appt-time{font-size:11px;color:var(--t2);margin-top:2px}
+.appt-notes{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* DEALS */
+.deal-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--el1);border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;cursor:pointer}
+.deal-row:active{transform:scale(.98)}
+
+/* ROI */
+.roi-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.roi-field label{display:block;font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.roi-input{width:100%;background:var(--el1);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif;outline:none}
+.roi-input:focus{border-color:rgba(168,85,247,.4)}
+.roi-results{display:flex;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.roi-res{flex:1;padding:12px 8px;text-align:center}
+.roi-res+.roi-res{border-left:1px solid var(--border)}
+.roi-res-val{font-size:18px;font-weight:800;letter-spacing:-.5px}
+.roi-res-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* SETTINGS */
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.set-row:last-child{border-bottom:none}
+.set-lbl{font-size:13px;font-weight:500}
+.set-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.set-val{font-size:12px;color:var(--t3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.toggle{width:42px;height:24px;border-radius:12px;background:var(--el3);border:1px solid var(--border2);position:relative;cursor:pointer;transition:background .2s,border-color .2s;flex-shrink:0}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:9px;background:#fff;transition:transform .18s;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.toggle.on::after{transform:translateX(18px)}
+.section-head{font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.9px;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:2px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s;backdrop-filter:blur(6px)}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:#0f0f0f;border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:18px 18px calc(20px + var(--safe-b));width:100%;max-width:430px;transform:translateY(100%);transition:transform .22s cubic-bezier(.32,0,.67,0)}
+.overlay.open .modal{transform:translateY(0)}
+.handle{width:32px;height:3px;border-radius:2px;background:var(--border2);margin:0 auto 14px}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--el1);border:1px solid var(--border2);border-radius:var(--r-sm);padding:11px 12px;color:var(--text);font-size:14px;font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,'Helvetica Neue',sans-serif;outline:none;transition:border-color .15s;appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(168,85,247,.4)}
+.field select option{background:#111}
+.field textarea{resize:none;height:72px;line-height:1.5}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.btn-cancel{flex:1;padding:11px;background:var(--el1);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--t2);font-size:13.5px;font-weight:600;font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,sans-serif;cursor:pointer}
+.btn-save{flex:2;padding:11px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:13.5px;font-weight:700;font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,sans-serif;cursor:pointer}
+.btn-del{flex:1;padding:11px;background:transparent;border:1px solid rgba(255,80,80,.25);border-radius:var(--r-sm);color:rgba(255,100,100,.8);font-size:13.5px;font-weight:600;font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,sans-serif;cursor:pointer}
+.btn-cancel:active,.btn-save:active,.btn-del:active{transform:scale(.97)}
+
+/* EMPTY */
+.empty{text-align:center;padding:36px 20px;color:var(--t3)}
+.empty-icon{margin-bottom:10px;opacity:.35}
+.empty-icon svg{width:28px;height:28px;stroke:var(--t2);fill:none;stroke-width:1.5}
+.empty-text{font-size:12.5px}
+
+/* TOAST */
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-70px);background:#1a1a1a;border:1px solid var(--border2);border-radius:10px;padding:9px 16px;font-size:12.5px;font-weight:600;color:var(--text);z-index:400;transition:transform .25s cubic-bezier(.34,1.4,.64,1);white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ADD FAB */
+.fab{position:fixed;bottom:calc(80px + var(--safe-b));right:16px;width:40px;height:40px;border-radius:20px;background:var(--accent);border:none;color:#fff;font-size:20px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(168,85,247,.35);z-index:50;line-height:1}
+.fab:active{transform:scale(.88)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="pages">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="top-bar">
+        <div class="logo-row">
+          <img class="logo-img" src="logo.png" onerror="this.style.display='none'" alt="">
+          <div class="logo-text">Finovex <span>AI</span></div>
+        </div>
+        <button class="btn-ghost" onclick="openModal('modal-profile')">Edit Profile</button>
+      </div>
+      <div class="page-inner" style="padding-top:14px">
+
+        <!-- Exec summary -->
+        <div class="exec-card" id="exec-card">
+          <div class="exec-body">
+            <div class="exec-tag">Summary · <span id="exec-month">April 2025</span></div>
+            <p class="exec-text" id="exec-text"></p>
+          </div>
+          <div class="exec-footer" id="exec-footer"></div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="section-label">
+          <span>Key Metrics</span>
+        </div>
+        <div class="kpi-grid" id="kpi-grid"></div>
+
+        <!-- Goals -->
+        <div class="section-label">
+          <span>Monthly Goals</span>
+          <button class="btn-ghost" onclick="openModal('modal-goals')">Edit Targets</button>
+        </div>
+        <div class="card" id="goals-card"></div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="page" id="page-pipeline">
+      <div class="top-bar">
+        <div>
+          <div style="font-size:17px;font-weight:700">Pipeline</div>
+          <div style="font-size:11px;color:var(--t3)" id="pipeline-sub"></div>
+        </div>
+        <button class="btn-accent" onclick="openAddLead()">+ Lead</button>
+      </div>
+      <div class="page-inner" style="padding-top:14px" id="leads-list"></div>
+    </div>
+
+    <!-- APPOINTMENTS -->
+    <div class="page" id="page-appointments">
+      <div class="top-bar">
+        <div>
+          <div style="font-size:17px;font-weight:700">Appointments</div>
+          <div style="font-size:11px;color:var(--t3)" id="appts-sub"></div>
+        </div>
+        <button class="btn-accent" onclick="openAddAppt()">+ Appt</button>
+      </div>
+      <div class="page-inner" style="padding-top:14px">
+        <div class="section-label">Upcoming</div>
+        <div id="appts-upcoming"></div>
+        <div class="section-label">Completed</div>
+        <div id="appts-completed"></div>
+      </div>
+    </div>
+
+    <!-- REVENUE -->
+    <div class="page" id="page-revenue">
+      <div class="top-bar">
+        <div style="font-size:17px;font-weight:700">Revenue</div>
+        <button class="btn-accent" onclick="openAddDeal()">+ Deal</button>
+      </div>
+      <div class="page-inner" style="padding-top:14px">
+        <div class="card" style="text-align:center;padding:20px 16px">
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px" id="rev-month-lbl">April 2025</div>
+          <div style="font-size:40px;font-weight:800;letter-spacing:-2px;line-height:1" id="rev-big">$0</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:5px">Total closed revenue</div>
+          <button class="btn-ghost" style="margin-top:12px" onclick="openModal('modal-rev-edit')">Edit Month</button>
+        </div>
+        <div class="section-label">Closed Deals</div>
+        <div id="deals-list"></div>
+        <div class="section-label">ROI Calculator</div>
+        <div class="card">
+          <div class="roi-inputs">
+            <div class="roi-field"><label>Invested ($)</label><input class="roi-input" id="roi-invested" type="number" value="12000" oninput="calcROI()"></div>
+            <div class="roi-field"><label>Pipeline ($)</label><input class="roi-input" id="roi-pipeline" type="number" value="284000" oninput="calcROI()"></div>
+            <div class="roi-field"><label>Closed ($)</label><input class="roi-input" id="roi-closed" type="number" value="18000" oninput="calcROI()"></div>
+            <div class="roi-field"><label>Close Rate (%)</label><input class="roi-input" id="roi-rate" type="number" value="19" oninput="calcROI()"></div>
+          </div>
+          <div class="roi-results" id="roi-results"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="top-bar">
+        <div style="font-size:17px;font-weight:700">Settings</div>
+      </div>
+      <div class="page-inner" style="padding-top:14px">
+        <div class="card">
+          <div class="section-head">Profile</div>
+          <div id="profile-rows"></div>
+          <button class="btn-ghost" style="margin-top:12px;width:100%;justify-content:center;display:flex" onclick="openModal('modal-profile')">Edit Profile</button>
+        </div>
+        <div class="card" style="margin-top:4px">
+          <div class="section-head">Notifications</div>
+          <div id="notif-rows"></div>
+        </div>
+        <div class="card" style="margin-top:4px">
+          <div class="section-head">Plan</div>
+          <div class="set-row">
+            <div><div class="set-lbl" id="plan-lbl">Elite Plan</div><div class="set-sub" id="plan-sub">Active</div></div>
+            <button class="btn-ghost" onclick="openModal('modal-plan')">Manage</button>
+          </div>
+        </div>
+        <div style="text-align:center;padding:20px 0 4px;font-size:11px;color:var(--t3)" id="footer-line">Finovex AI</div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- NAV -->
+  <div id="nav">
+    <div class="nav-item active" onclick="goPage('dashboard',this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" onclick="goPage('pipeline',this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M22 12H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
+      </div>
+      <span class="nav-label">Pipeline</span>
+    </div>
+    <div class="nav-item" onclick="goPage('appointments',this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <span class="nav-label">Calendar</span>
+    </div>
+    <div class="nav-item" onclick="goPage('revenue',this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <span class="nav-label">Revenue</span>
+    </div>
+    <div class="nav-item" onclick="goPage('settings',this)">
+      <div class="nav-icon-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+      <span class="nav-label">Settings</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Profile -->
+<div class="overlay" id="modal-profile">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title">Edit Profile</div>
+    <div class="field"><label>Full Name</label><input id="p-name" type="text" placeholder="Michael Roberts"></div>
+    <div class="field"><label>Email</label><input id="p-email" type="email" placeholder="email@domain.com"></div>
+    <div class="field"><label>Practice Name</label><input id="p-practice" type="text" placeholder="Roberts Financial Advisory"></div>
+    <div class="field"><label>Phone</label><input id="p-phone" type="tel" placeholder="(210) 555-0000"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-profile')">Cancel</button>
+      <button class="btn-save" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Edit -->
+<div class="overlay" id="modal-kpi">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title" id="kpi-modal-ttl">Edit Metric</div>
+    <div class="field"><label>Current Value</label><input id="kpi-val" type="text" placeholder="$18,000"></div>
+    <div class="field"><label>Change Note</label><input id="kpi-delta" type="text" placeholder="▲ 24% this month"></div>
+    <div class="field"><label>Target</label><input id="kpi-target" type="text" placeholder="Target: $25k"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-kpi')">Cancel</button>
+      <button class="btn-save" onclick="saveKPI()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Goals -->
+<div class="overlay" id="modal-goals">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title">Monthly Targets</div>
+    <div class="field"><label>Lead Target</label><input id="g-leads" type="number" placeholder="60"></div>
+    <div class="field"><label>Calls Booked Target</label><input id="g-calls" type="number" placeholder="15"></div>
+    <div class="field"><label>Deals Closed Target</label><input id="g-deals" type="number" placeholder="5"></div>
+    <div class="field"><label>Revenue Target ($)</label><input id="g-revenue" type="number" placeholder="25000"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-goals')">Cancel</button>
+      <button class="btn-save" onclick="saveGoals()">Save Targets</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lead -->
+<div class="overlay" id="modal-lead">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title" id="lead-ttl">Add Lead</div>
+    <div class="field"><label>Full Name</label><input id="l-name" type="text" placeholder="James Harrington"></div>
+    <div class="field"><label>AUM</label><input id="l-aum" type="text" placeholder="$4.2M"></div>
+    <div class="field"><label>Status</label>
+      <select id="l-status"><option value="new">New</option><option value="contacted">Contacted</option><option value="booked">Booked</option><option value="showed">Showed</option><option value="closed">Closed</option></select>
+    </div>
+    <div class="field"><label>Score (0–100)</label><input id="l-score" type="number" min="0" max="100" placeholder="75"></div>
+    <div class="field"><label>Next Action</label><input id="l-note" type="text" placeholder="Follow up Friday"></div>
+    <div class="modal-btns" id="lead-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-lead')">Cancel</button>
+      <button class="btn-save" onclick="saveLead()">Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- Appointment -->
+<div class="overlay" id="modal-appt">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title" id="appt-ttl">Add Appointment</div>
+    <div class="field"><label>Client Name</label><input id="a-name" type="text" placeholder="James Harrington"></div>
+    <div class="field"><label>Date</label><input id="a-date" type="date"></div>
+    <div class="field"><label>Time</label><input id="a-time" type="time" value="10:00"></div>
+    <div class="field"><label>Duration</label>
+      <select id="a-dur"><option value="30 min">30 min</option><option value="45 min">45 min</option><option value="60 min" selected>60 min</option><option value="90 min">90 min</option></select>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="a-status"><option value="upcoming">Upcoming</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="a-notes" placeholder="Discovery call..."></textarea></div>
+    <div class="modal-btns" id="appt-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-appt')">Cancel</button>
+      <button class="btn-save" onclick="saveAppt()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deal -->
+<div class="overlay" id="modal-deal">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title" id="deal-ttl">Add Deal</div>
+    <div class="field"><label>Client Name</label><input id="d-name" type="text" placeholder="Patricia Walsh"></div>
+    <div class="field"><label>Deal Value ($)</label><input id="d-value" type="number" placeholder="4500"></div>
+    <div class="field"><label>Service Type</label><input id="d-type" type="text" placeholder="Full AUM Management"></div>
+    <div class="field"><label>AUM</label><input id="d-aum" type="text" placeholder="$5.5M"></div>
+    <div class="field"><label>Date Closed</label><input id="d-date" type="date"></div>
+    <div class="modal-btns" id="deal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-deal')">Cancel</button>
+      <button class="btn-save" onclick="saveDeal()">Save Deal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Revenue month edit -->
+<div class="overlay" id="modal-rev-edit">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title">Edit Month Label</div>
+    <div class="field"><label>Month</label><input id="rev-month" type="text" placeholder="April 2025"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-rev-edit')">Cancel</button>
+      <button class="btn-save" onclick="saveRevMonth()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Plan -->
+<div class="overlay" id="modal-plan">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title">Manage Plan</div>
+    <div class="field"><label>Plan Name</label><input id="plan-name" type="text" placeholder="Elite Plan"></div>
+    <div class="field"><label>Monthly Rate ($)</label><input id="plan-rate" type="number" placeholder="1500"></div>
+    <div class="field"><label>Renewal Date</label><input id="plan-renewal" type="date"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-plan')">Cancel</button>
+      <button class="btn-save" onclick="savePlan()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEFAULT DATA ──
+const D = {
+  profile:{name:'Michael Roberts',email:'m.roberts@advisorgroup.com',practice:'Roberts Financial Advisory',phone:'(210) 555-0182'},
+  kpis:[
+    {id:'revenue',label:'Revenue Generated',value:'$18,000',delta:'▲ 24% this month',target:'Target: $25k'},
+    {id:'leads',label:'Leads Generated',value:'42',delta:'▲ 11 from last month',target:'Target: 60'},
+    {id:'calls',label:'Appointments',value:'12',delta:'● 3 this week',target:'Target: 15'},
+    {id:'deals',label:'Deals Closed',value:'4',delta:'▲ 1 from last month',target:'Target: 5'}
+  ],
+  goals:{leads:60,calls:15,deals:5,revenue:25000},
+  leads:[
+    {id:1,name:'James Harrington',aum:'$4.2M',status:'booked',score:92,note:'Call Thu 2pm'},
+    {id:2,name:'Susan Langford',aum:'$9.0M',status:'booked',score:88,note:'Call Fri 10am'},
+    {id:3,name:'Robert Castillo',aum:'$7.1M',status:'showed',score:76,note:'Send proposal'},
+    {id:4,name:"Mary O'Brien",aum:'$2.8M',status:'contacted',score:64,note:'Follow-up email'},
+    {id:5,name:'Patricia Walsh',aum:'$5.5M',status:'closed',score:100,note:'Signed $4,500/yr'},
+    {id:6,name:'David Martinez',aum:'$3.3M',status:'new',score:41,note:'Send intro email'}
+  ],
+  appointments:[
+    {id:1,name:'James Harrington',date:'2025-04-10',time:'14:00',duration:'60 min',status:'upcoming',notes:'Discovery call'},
+    {id:2,name:'Susan Langford',date:'2025-04-11',time:'10:00',duration:'60 min',status:'upcoming',notes:'$9M AUM prospect'},
+    {id:3,name:'Robert Castillo',date:'2025-04-03',time:'11:00',duration:'45 min',status:'completed',notes:'Estate planning'},
+    {id:4,name:'Patricia Walsh',date:'2025-03-28',time:'14:00',duration:'60 min',status:'completed',notes:'Signed deal'}
+  ],
+  deals:[
+    {id:1,name:'Patricia Walsh',value:4500,type:'Full AUM Management',aum:'$5.5M',date:'2025-03-28'},
+    {id:2,name:'Thomas Brennan',value:5500,type:'Estate Planning + AUM',aum:'$6.4M',date:'2025-03-30'},
+    {id:3,name:'Linda Forsythe',value:3000,type:'Financial Planning',aum:'$3.1M',date:'2025-04-02'},
+    {id:4,name:'Carlos Mendez',value:5000,type:'Full AUM Management',aum:'$4.8M',date:'2025-04-04'}
+  ],
+  plan:{name:'Elite Plan',rate:1500,renewal:'2025-05-01'},
+  notifications:{leads:true,calls:true,digest:true,health:false},
+  revMonth:'April 2025'
+};
+
+// ── STORAGE ──
+const get = k => { try{ const v=localStorage.getItem('fai_'+k); return v?JSON.parse(v):null;}catch{return null;} };
+const set = (k,v) => { try{localStorage.setItem('fai_'+k,JSON.stringify(v));}catch{} };
+const data = k => get(k) || JSON.parse(JSON.stringify(D[k]));
+
+// ── EDITING STATE ──
+let eLeadId=null,eApptId=null,eDealId=null,eKpiId=null;
+
+// ── NAV ──
+function goPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  ({dashboard:renderDash,pipeline:renderPipeline,appointments:renderAppts,revenue:renderRevenue,settings:renderSettings})[name]?.();
+}
+
+// ── MODAL ──
+function openModal(id){
+  prefillModal(id);
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow='';
+}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);}));
+
+function prefillModal(id){
+  if(id==='modal-profile'){const p=data('profile');document.getElementById('p-name').value=p.name||'';document.getElementById('p-email').value=p.email||'';document.getElementById('p-practice').value=p.practice||'';document.getElementById('p-phone').value=p.phone||'';}
+  if(id==='modal-goals'){const g=data('goals');document.getElementById('g-leads').value=g.leads;document.getElementById('g-calls').value=g.calls;document.getElementById('g-deals').value=g.deals;document.getElementById('g-revenue').value=g.revenue;}
+  if(id==='modal-rev-edit'){document.getElementById('rev-month').value=data('revMonth');}
+  if(id==='modal-plan'){const p=data('plan');document.getElementById('plan-name').value=p.name||'';document.getElementById('plan-rate').value=p.rate||'';document.getElementById('plan-renewal').value=p.renewal||'';}
+}
+
+// ── TOAST ──
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+// ── AVATARS ──
+const AVG=['#3b1a6e','#1e2a4e','#2a1a3e','#1a2030','#2d1f6e','#221a3e'];
+const initials = n => n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+// ── DASHBOARD ──
+function renderDash(){
+  const kpis=data('kpis'),goals=data('goals'),deals=data('deals'),leads=data('leads'),rm=data('revMonth');
+  const totalRev=deals.reduce((s,d)=>s+Number(d.value||0),0);
+  const closed=leads.filter(l=>l.status==='closed').length;
+  const booked=leads.filter(l=>l.status==='booked').length;
+  document.getElementById('exec-month').textContent=rm;
+  document.getElementById('exec-text').innerHTML=`This month we generated <b>${leads.length} leads</b>, booked <b>${booked} calls</b>, and closed <b>${closed} clients</b> worth <b>$${totalRev.toLocaleString()}</b> in revenue.`;
+  const pipe=leads.length*22000,roi=totalRev>0?(totalRev/12000).toFixed(1)+'×':'—',conv=leads.length>0?Math.round(closed/leads.length*100)+'%':'0%';
+  document.getElementById('exec-footer').innerHTML=[{v:'$'+(pipe/1000).toFixed(0)+'k',l:'Pipeline'},{v:conv,l:'Conversion'},{v:roi,l:'ROI'}].map(s=>`<div class="exec-stat"><div class="exec-val">${s.v}</div><div class="exec-lbl">${s.l}</div></div>`).join('');
+
+  document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
+    <div class="kpi-card" onclick="openEditKPI('${k.id}')">
+      <div class="kpi-lbl">${k.label}</div>
+      <div class="kpi-val">${k.value}</div>
+      <div class="kpi-badge">${k.delta}</div>
+      <div class="kpi-target">${k.target}</div>
+      <div class="kpi-edit"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+    </div>`).join('');
+
+  const kv=k=>parseInt((kpis.find(x=>x.id===k)?.value||'0').replace(/\D/g,''))||0;
+  const bars=[
+    {l:'Leads',c:kv('leads'),t:goals.leads},
+    {l:'Calls Booked',c:kv('calls'),t:goals.calls},
+    {l:'Deals Closed',c:kv('deals'),t:goals.deals},
+    {l:'Revenue',c:kv('revenue'),t:goals.revenue,pre:'$'}
+  ];
+  document.getElementById('goals-card').innerHTML=bars.map(b=>{
+    const pct=b.t>0?Math.min(100,Math.round(b.c/b.t*100)):0;
+    const cv=b.pre?`${b.pre}${b.c.toLocaleString()}`:b.c;
+    const tv=b.pre?`${b.pre}${b.t.toLocaleString()}`:b.t;
+    return `<div class="prog-wrap"><div class="prog-header"><span class="prog-name">${b.l}</span><span class="prog-vals">${cv} / ${tv}</span></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div></div>`;
+  }).join('');
+}
+
+// ── PIPELINE ──
+function renderPipeline(){
+  const leads=data('leads');
+  document.getElementById('pipeline-sub').textContent=`${leads.length} contacts`;
+  document.getElementById('leads-list').innerHTML=leads.length?leads.map((l,i)=>`
+    <div class="lead-row" onclick="openEditLead(${l.id})">
+      <div class="lead-av" style="background:${AVG[i%AVG.length]}50">${initials(l.name)}</div>
+      <div class="lead-info"><div class="lead-name">${l.name}</div><div class="lead-note">${l.note||''}</div></div>
+      <div class="lead-right"><div class="lead-aum">${l.aum}</div><div class="status-pill s-${l.status}">${l.status}</div></div>
+    </div>`).join(''):`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M22 12H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div><div class="empty-text">No leads yet — tap + Lead to add</div></div>`;
+}
+
+// ── APPOINTMENTS ──
+function renderAppts(){
+  const appts=data('appointments');
+  const up=appts.filter(a=>a.status==='upcoming').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const done=appts.filter(a=>a.status!=='upcoming').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('appts-sub').textContent=`${up.length} upcoming`;
+  const fmt=a=>{
+    const d=new Date(a.date+'T12:00:00');
+    const mo=d.toLocaleString('en',{month:'short'}).toUpperCase();
+    const dy=d.getDate();
+    const[h,m]=a.time?a.time.split(':'):[10,0];
+    const hh=parseInt(h),ampm=hh>=12?'PM':'AM',h12=hh>12?hh-12:(hh||12);
+    return `<div class="appt-row" onclick="openEditAppt(${a.id})">
+      <div class="appt-date"><div class="appt-mo">${mo}</div><div class="appt-day">${dy}</div></div>
+      <div class="appt-info"><div class="appt-name">${a.name}</div><div class="appt-time">${h12}:${m} ${ampm} · ${a.duration||'60 min'}</div>${a.notes?`<div class="appt-notes">${a.notes}</div>`:''}</div>
+      <div class="status-pill s-${a.status==='upcoming'?'booked':'showed'}">${a.status}</div>
+    </div>`;
+  };
+  document.getElementById('appts-upcoming').innerHTML=up.length?up.map(fmt).join(''):`<div class="empty"><div class="empty-text" style="color:var(--t3)">No upcoming appointments</div></div>`;
+  document.getElementById('appts-completed').innerHTML=done.length?done.map(fmt).join(''):`<div class="empty"><div class="empty-text" style="color:var(--t3)">None yet</div></div>`;
+}
+
+// ── REVENUE ──
+function renderRevenue(){
+  const deals=data('deals'),rm=data('revMonth');
+  const total=deals.reduce((s,d)=>s+Number(d.value||0),0);
+  document.getElementById('rev-big').textContent='$'+total.toLocaleString();
+  document.getElementById('rev-month-lbl').textContent=rm;
+  document.getElementById('deals-list').innerHTML=deals.length?deals.map(d=>`
+    <div class="deal-row" onclick="openEditDeal(${d.id})">
+      <div class="lead-av" style="background:var(--el3)">${initials(d.name)}</div>
+      <div class="lead-info"><div class="lead-name">${d.name}</div><div class="lead-note">${d.type||''} · ${d.aum||''}</div></div>
+      <div class="lead-right"><div class="lead-aum">$${Number(d.value).toLocaleString()}</div><div class="status-pill s-closed">paid</div></div>
+    </div>`).join(''):`<div class="empty"><div class="empty-text" style="color:var(--t3)">No deals yet — tap + Deal to add</div></div>`;
+  calcROI();
+}
+
+function calcROI(){
+  const inv=parseFloat(document.getElementById('roi-invested')?.value)||0;
+  const pip=parseFloat(document.getElementById('roi-pipeline')?.value)||0;
+  const clo=parseFloat(document.getElementById('roi-closed')?.value)||0;
+  const rate=parseFloat(document.getElementById('roi-rate')?.value)||0;
+  const proj=pip*(rate/100),roi=inv>0?(clo/inv).toFixed(1)+'×':'—',net=Math.round(proj-inv);
+  document.getElementById('roi-results').innerHTML=[
+    {v:roi,l:'ROI Multiple'},
+    {v:'$'+Math.round(proj).toLocaleString(),l:'Projected'},
+    {v:(net>=0?'$':'-$')+Math.abs(net).toLocaleString(),l:'Net Profit'}
+  ].map(r=>`<div class="roi-res"><div class="roi-res-val">${r.v}</div><div class="roi-res-lbl">${r.l}</div></div>`).join('');
+}
+
+// ── SETTINGS ──
+function renderSettings(){
+  const p=data('profile'),pl=data('plan'),n=data('notifications');
+  document.getElementById('footer-line').textContent=`Finovex AI · ${p.email||''}`;
+  document.getElementById('plan-lbl').textContent=pl.name||'Elite Plan';
+  document.getElementById('plan-sub').textContent=pl.renewal?`Renews ${pl.renewal}`:'Active';
+  document.getElementById('profile-rows').innerHTML=[{l:'Name',v:p.name},{l:'Email',v:p.email},{l:'Practice',v:p.practice},{l:'Phone',v:p.phone}].map(r=>`<div class="set-row"><div class="set-lbl">${r.l}</div><div class="set-val">${r.v||'—'}</div></div>`).join('');
+  document.getElementById('notif-rows').innerHTML=[
+    {k:'leads',l:'New lead alerts',s:'When a lead qualifies'},
+    {k:'calls',l:'Call booking alerts',s:'When a prospect books'},
+    {k:'digest',l:'Weekly digest',s:'Every Monday at 8am'},
+    {k:'health',l:'System health',s:'On component issues'}
+  ].map(r=>`<div class="set-row"><div><div class="set-lbl">${r.l}</div><div class="set-sub">${r.s}</div></div><div class="toggle ${n[r.k]?'on':''}" onclick="toggleNotif('${r.k}',this)"></div></div>`).join('');
+}
+
+function toggleNotif(k,el){const n=data('notifications');n[k]=!n[k];set('notifications',n);el.classList.toggle('on',n[k]);}
+
+// ── SAVES ──
+function saveProfile(){
+  set('profile',{name:document.getElementById('p-name').value.trim(),email:document.getElementById('p-email').value.trim(),practice:document.getElementById('p-practice').value.trim(),phone:document.getElementById('p-phone').value.trim()});
+  closeModal('modal-profile');renderDash();renderSettings();toast('Profile saved');
+}
+
+function openEditKPI(id){
+  eKpiId=id;const k=data('kpis').find(x=>x.id===id);if(!k)return;
+  document.getElementById('kpi-modal-ttl').textContent='Edit — '+k.label;
+  document.getElementById('kpi-val').value=k.value;
+  document.getElementById('kpi-delta').value=k.delta;
+  document.getElementById('kpi-target').value=k.target;
+  openModal('modal-kpi');
+}
+function saveKPI(){
+  const kpis=data('kpis'),i=kpis.findIndex(x=>x.id===eKpiId);if(i<0)return;
+  kpis[i].value=document.getElementById('kpi-val').value.trim();
+  kpis[i].delta=document.getElementById('kpi-delta').value.trim();
+  kpis[i].target=document.getElementById('kpi-target').value.trim();
+  set('kpis',kpis);closeModal('modal-kpi');renderDash();toast('Metric updated');
+}
+
+function saveGoals(){
+  set('goals',{leads:+document.getElementById('g-leads').value||60,calls:+document.getElementById('g-calls').value||15,deals:+document.getElementById('g-deals').value||5,revenue:+document.getElementById('g-revenue').value||25000});
+  closeModal('modal-goals');renderDash();toast('Targets saved');
+}
+
+// Lead CRUD
+function openAddLead(){
+  eLeadId=null;
+  document.getElementById('lead-ttl').textContent='Add Lead';
+  ['l-name','l-aum','l-score','l-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('l-status').value='new';
+  document.getElementById('lead-btns').innerHTML=`<button class="btn-cancel" onclick="closeModal('modal-lead')">Cancel</button><button class="btn-save" onclick="saveLead()">Add Lead</button>`;
+  document.getElementById('modal-lead').classList.add('open');document.body.style.overflow='hidden';
+}
+function openEditLead(id){
+  eLeadId=id;const l=data('leads').find(x=>x.id===id);if(!l)return;
+  document.getElementById('lead-ttl').textContent='Edit Lead';
+  document.getElementById('l-name').value=l.name||'';document.getElementById('l-aum').value=l.aum||'';
+  document.getElementById('l-status').value=l.status||'new';document.getElementById('l-score').value=l.score||'';
+  document.getElementById('l-note').value=l.note||'';
+  document.getElementById('lead-btns').innerHTML=`<button class="btn-del" onclick="deleteLead(${id})">Delete</button><button class="btn-save" onclick="saveLead()">Save</button>`;
+  document.getElementById('modal-lead').classList.add('open');document.body.style.overflow='hidden';
+}
+function saveLead(){
+  const leads=data('leads');
+  const d={name:document.getElementById('l-name').value.trim(),aum:document.getElementById('l-aum').value.trim(),status:document.getElementById('l-status').value,score:+document.getElementById('l-score').value||50,note:document.getElementById('l-note').value.trim()};
+  if(!d.name)return;
+  if(eLeadId){const i=leads.findIndex(x=>x.id===eLeadId);if(i>=0)leads[i]={...leads[i],...d};}
+  else{d.id=Date.now();leads.push(d);}
+  set('leads',leads);closeModal('modal-lead');renderPipeline();toast(eLeadId?'Lead updated':'Lead added');
+}
+function deleteLead(id){set('leads',data('leads').filter(x=>x.id!==id));closeModal('modal-lead');renderPipeline();toast('Lead removed');}
+
+// Appt CRUD
+function openAddAppt(){
+  eApptId=null;document.getElementById('appt-ttl').textContent='Add Appointment';
+  ['a-name','a-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('a-date').value='';document.getElementById('a-time').value='10:00';
+  document.getElementById('a-dur').value='60 min';document.getElementById('a-status').value='upcoming';
+  document.getElementById('appt-btns').innerHTML=`<button class="btn-cancel" onclick="closeModal('modal-appt')">Cancel</button><button class="btn-save" onclick="saveAppt()">Add</button>`;
+  document.getElementById('modal-appt').classList.add('open');document.body.style.overflow='hidden';
+}
+function openEditAppt(id){
+  eApptId=id;const a=data('appointments').find(x=>x.id===id);if(!a)return;
+  document.getElementById('appt-ttl').textContent='Edit Appointment';
+  document.getElementById('a-name').value=a.name||'';document.getElementById('a-date').value=a.date||'';
+  document.getElementById('a-time').value=a.time||'10:00';document.getElementById('a-dur').value=a.duration||'60 min';
+  document.getElementById('a-status').value=a.status||'upcoming';document.getElementById('a-notes').value=a.notes||'';
+  document.getElementById('appt-btns').innerHTML=`<button class="btn-del" onclick="deleteAppt(${id})">Delete</button><button class="btn-save" onclick="saveAppt()">Save</button>`;
+  document.getElementById('modal-appt').classList.add('open');document.body.style.overflow='hidden';
+}
+function saveAppt(){
+  const appts=data('appointments');
+  const d={name:document.getElementById('a-name').value.trim(),date:document.getElementById('a-date').value,time:document.getElementById('a-time').value,duration:document.getElementById('a-dur').value,status:document.getElementById('a-status').value,notes:document.getElementById('a-notes').value.trim()};
+  if(!d.name)return;
+  if(eApptId){const i=appts.findIndex(x=>x.id===eApptId);if(i>=0)appts[i]={...appts[i],...d};}
+  else{d.id=Date.now();appts.push(d);}
+  set('appointments',appts);closeModal('modal-appt');renderAppts();toast(eApptId?'Appointment updated':'Appointment added');
+}
+function deleteAppt(id){set('appointments',data('appointments').filter(x=>x.id!==id));closeModal('modal-appt');renderAppts();toast('Appointment removed');}
+
+// Deal CRUD
+function openAddDeal(){
+  eDealId=null;document.getElementById('deal-ttl').textContent='Add Deal';
+  ['d-name','d-value','d-type','d-aum','d-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('deal-btns').innerHTML=`<button class="btn-cancel" onclick="closeModal('modal-deal')">Cancel</button><button class="btn-save" onclick="saveDeal()">Add Deal</button>`;
+  document.getElementById('modal-deal').classList.add('open');document.body.style.overflow='hidden';
+}
+function openEditDeal(id){
+  eDealId=id;const d=data('deals').find(x=>x.id===id);if(!d)return;
+  document.getElementById('deal-ttl').textContent='Edit Deal';
+  document.getElementById('d-name').value=d.name||'';document.getElementById('d-value').value=d.value||'';
+  document.getElementById('d-type').value=d.type||'';document.getElementById('d-aum').value=d.aum||'';
+  document.getElementById('d-date').value=d.date||'';
+  document.getElementById('deal-btns').innerHTML=`<button class="btn-del" onclick="deleteDeal(${id})">Delete</button><button class="btn-save" onclick="saveDeal()">Save</button>`;
+  document.getElementById('modal-deal').classList.add('open');document.body.style.overflow='hidden';
+}
+function saveDeal(){
+  const deals=data('deals');
+  const d={name:document.getElementById('d-name').value.trim(),value:+document.getElementById('d-value').value||0,type:document.getElementById('d-type').value.trim(),aum:document.getElementById('d-aum').value.trim(),date:document.getElementById('d-date').value};
+  if(!d.name)return;
+  if(eDealId){const i=deals.findIndex(x=>x.id===eDealId);if(i>=0)deals[i]={...deals[i],...d};}
+  else{d.id=Date.now();deals.push(d);}
+  set('deals',deals);closeModal('modal-deal');renderRevenue();toast(eDealId?'Deal updated':'Deal added');
+}
+function deleteDeal(id){set('deals',data('deals').filter(x=>x.id!==id));closeModal('modal-deal');renderRevenue();toast('Deal removed');}
+
+function saveRevMonth(){const m=document.getElementById('rev-month').value.trim();if(m)set('revMonth',m);closeModal('modal-rev-edit');renderRevenue();renderDash();toast('Saved');}
+
+function savePlan(){
+  set('plan',{name:document.getElementById('plan-name').value.trim(),rate:+document.getElementById('plan-rate').value||1500,renewal:document.getElementById('plan-renewal').value});
+  closeModal('modal-plan');renderSettings();toast('Plan saved');
+}
+
+// ── INIT ──
+renderDash();
+</script>
+</body>
+</html>
